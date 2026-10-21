@@ -7,6 +7,23 @@ There are a few adjustments needed before a script can be run in MPI.
 You will have to set up an environment with the following packages under Julia 1.9+:
 `PartitionedArrays`, `MPI`, and `JutulDarcy`. `HYPRE` is automatically installed. This is generally the best performing solver setup available, even if you are working in a shared memory environment.
 
+### Choosing the MPI library
+
+MPI.jl uses `MPICH_jll` by default. On macOS that build only has a TCP transport,
+also between processes on the same machine, so the many small messages in the
+BoomerAMG setup make the pressure solver stop scaling after a couple of
+processes. Switching the environment to `OpenMPI_jll`, which uses shared memory,
+avoids this:
+
+```julia
+using MPIPreferences
+MPIPreferences.use_jll_binary("OpenMPI_jll")
+```
+
+This writes a `LocalPreferences.toml` next to the project; restart Julia afterwards.
+HYPRE then automatically uses its Open MPI build. Launch with `MPI.mpiexec()` (or
+`mpiexecjl`), not a system `mpirun`, so that the launcher matches the library.
+
 ### Writing the script
 
 Write your script as usual. The following options must then be set:
